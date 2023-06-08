@@ -1,19 +1,25 @@
 package path
 
 import (
+	"runtime"
+
 	"github.com/dop251/goja"
+	"github.com/dop251/goja_nodejs/errors"
 	"github.com/dop251/goja_nodejs/require"
 )
 
 const ModuleName = "node:path"
 
-func IsWin32Platform() {
+func IsWin32Platform() bool {
+	return runtime.GOOS == "windows"
 }
 
 type Path struct {
-	runtime *goja.Runtime
-	win32   PlatformPath
-	posix   PlatformPath
+	runtime   *goja.Runtime
+	Win32     PlatformPath
+	Posix     PlatformPath
+	Sep       string
+	Delimiter string
 }
 
 type ForamtInputPathObject struct {
@@ -38,11 +44,26 @@ type PlatformPath interface {
 	ToNamespacedPath(p string) string
 }
 
-func Require(runtime *goja.Runtime, module *goja.Object) {
-	p := &Path{runtime: runtime}
+func CreatePathCalled(name string, fn PlatformPath) func(goja.FunctionCall) goja.Value {
+	return func(call goja.FunctionCall) goja.Value {
+		arguments := call.Arguments
+		switch name {
+		case "basename":
+			// fn()
+			if len(arguments) == 0 {
+				panic(errors.NewTypeError(r *goja.Runtime, code string, params ...interface{}))
+			}
+		}
+	}
+}
 
-	exports := module.Get("exports").(*goja.Object)
-	// exports.Set("Path", "")
+func Require(runtime *goja.Runtime, module *goja.Object) {
+	win32Path := NewWin32Path(runtime)
+	proto := runtime.NewObject()
+	if IsWin32Platform() {
+		proto.Set("basename", win32Path.Basename)
+		proto.Set("posix", nil)
+	}
 }
 
 func Enable(runtime *goja.Runtime) {
